@@ -5,10 +5,39 @@ import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
 import RunCard from "../components/RunCard";
 import runsData from "../../data/madison.json";
+import { useState } from "react";
+
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function MadisonPage() {
+
+  function groupByWeek(runs) {
+    const weeks = {};
+  
+    runs.forEach(run => {
+      const date = new Date(run.Date);
+      const weekKey = `${date.getFullYear()}-W${Math.ceil(date.getDate() / 7)}`;
+      weeks[weekKey] = (weeks[weekKey] || 0) + run.Distance;
+    });
+  
+    return weeks;
+  }
+  
+  function groupByMonth(runs) {
+    const months = {};
+  
+    runs.forEach(run => {
+      const date = new Date(run.Date);
+      const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      months[monthKey] = (months[monthKey] || 0) + run.Distance;
+    });
+  
+    return months;
+  }
+  
+  
+  
   // Calculate stats
   const stats = useMemo(() => {
     const totalMiles = runsData.reduce((acc, run) => acc + run.Distance, 0);
@@ -38,55 +67,97 @@ export default function MadisonPage() {
   }, []);
 
   // Chart data
-  const chartData = useMemo(() => {
-    return {
-      labels: runsData.map(run => run.Date),
-      datasets: [
-        {
-          label: "Distance (mi)",
-          data: runsData.map(run => run.Distance),
-          borderColor: "rgba(34,197,94,1)",
-          backgroundColor: "rgba(34,197,94,0.3)",
-          tension: 0.3,
-        },
-      ],
-    };
-  }, []);
+  const monthlyMiles = groupByMonth(runsData);
+
+const chartData = {
+  labels: Object.keys(monthlyMiles),
+  datasets: [
+    {
+      label: "Miles per Month",
+      data: Object.values(monthlyMiles),
+      borderColor: "#22c55e",
+      backgroundColor: "rgba(34,197,94,0.3)",
+      tension: 0.3,
+      fill: true,
+    },
+  ],
+};
+
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6">🏃 Madison Marathon Training</h1>
+    <main className="max-w-6xl mx-auto px-4 py-12 bg-gray-50 min-h-screen">
+      <h1 className="text-4xl font-extrabold mb-2 tracking-tight">
+        🏃 Madison Marathon Training
+      </h1>
+      <p className="text-gray-600 mb-10">
+        From first mile to marathon day — a complete training breakdown.
+      </p>
 
-      <section className="mb-8 bg-white p-4 rounded-lg shadow">
-        <h2 className="font-semibold mb-2">Marathon Result</h2>
-        <p>Date: {stats.marathonDate}</p>
-        <p>Time: {stats.marathonTime}</p>
+
+      <section className="mb-10 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-2xl shadow-lg">
+        <h2 className="text-lg font-semibold mb-3">🏁 Marathon Result</h2>
+
+        <div className="grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-sm opacity-80">Race Date</p>
+            <p className="text-xl font-bold">{stats.marathonDate}</p>
+          </div>
+
+          <div>
+            <p className="text-sm opacity-80">Finish Time</p>
+            <p className="text-xl font-bold">{stats.marathonTime}</p>
+          </div>
+        </div>
       </section>
 
-      <section className="mb-8 bg-white p-4 rounded-lg shadow">
-        <h2 className="font-semibold mb-2">Training Summary</h2>
-        <p>Total Miles: {stats.totalMiles} mi</p>
-        <p>Total Time: {stats.totalTime}</p>
-        <p>Average Pace: {stats.avgPace}</p>
-      </section>
 
-      <section className="mb-8 bg-white p-4 rounded-lg shadow">
-        <h2 className="font-semibold mb-2">Distance Over Time</h2>
+      <section className="mb-10 grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow text-center">
+          <p className="text-sm text-gray-500 mb-1">Total Miles</p>
+          <p className="text-3xl font-bold text-green-600">
+            {stats.totalMiles}
+            <span className="text-base font-medium ml-1">mi</span>
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow text-center">
+          <p className="text-sm text-gray-500 mb-1">Total Time</p>
+          <p className="text-3xl font-bold">{stats.totalTime}</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow text-center">
+          <p className="text-sm text-gray-500 mb-1">Avg Pace</p>
+          <p className="text-3xl font-bold">{stats.avgPace}</p>
+        </div>
+      </section>
+      
+      <section className="mb-12 bg-white p-6 rounded-2xl shadow">
+        <h2 className="text-lg font-semibold mb-4">
+          📈 Monthly Distance
+        </h2>
         <Line data={chartData} />
       </section>
 
-      <section className="space-y-4">
-        {runsData.map((run, idx) => (
-          <RunCard
-            key={idx}
-            date={run.Date}
-            distance={run.Distance}
-            time={run.Time}
-            pace={run.AveragePace}
-            notes={run.Notes}
-          />
-        ))}
+
+
+
+      <section>
+        <h2 className="text-2xl font-bold mb-6">📅 Training Runs</h2>
+
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {runsData.map((run, idx) => (
+            <RunCard
+              key={idx}
+              date={run.Date}
+              distance={run.Distance}
+              time={run.Time}
+              pace={run.AveragePace}
+              notes={run.Notes}
+            />
+          ))}
+        </div>
       </section>
+
     </main>
   );
 }
