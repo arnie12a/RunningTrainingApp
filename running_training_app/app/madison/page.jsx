@@ -85,13 +85,27 @@ const chartData = {
 
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-12 bg-gray-50 min-h-screen">
-      <h1 className="text-4xl font-extrabold mb-2 tracking-tight">
-        🏃 Madison Marathon Training
-      </h1>
-      <p className="text-gray-600 mb-10">
-        From first mile to marathon day — a complete training breakdown.
-      </p>
+    <main className="max-w-6xl mx-auto px-4 py-12 min-h-screen">
+      <div className="flex items-start justify-between mb-10">
+        <div>
+          <h1 className="text-4xl font-extrabold mb-2 tracking-tight">
+            🏃 Madison Marathon Training
+          </h1>
+          <p className="text-gray-600">
+            From first mile to marathon day — a complete training breakdown.
+          </p>
+        </div>
+
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-medium
+                    text-gray-700 border border-gray-300 rounded-lg
+                    px-4 py-2 hover:bg-gray-100 hover:text-gray-900
+                    transition-colors"
+        >
+          ← Back
+        </a>
+      </div>
 
 
       <section className="mb-10 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-2xl shadow-lg">
