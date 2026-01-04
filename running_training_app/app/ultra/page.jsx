@@ -1,7 +1,13 @@
-import runs from "@/data/ultra50km.json";
+import runs from "../../data/ultra50km.json";
 
 export default function UltraPage() {
-  /* ------------------ helpers ------------------ */
+  /* ------------------ Constants ------------------ */
+  const TRAINING_START = new Date("2026-01-05"); // Monday
+  const RACE_DATE = new Date("2026-06-13"); // update if needed
+  const WEEKLY_GOAL_MIN = 45;
+  const WEEKLY_GOAL_MAX = 55;
+
+  /* ------------------ Helpers ------------------ */
   const paceToSeconds = (pace) => {
     const [min, sec] = pace.split(":").map(Number);
     return min * 60 + sec;
@@ -13,59 +19,102 @@ export default function UltraPage() {
     return `${min}:${sec.toString().padStart(2, "0")}`;
   };
 
+  // Monday-based week key
   const getWeekKey = (dateStr) => {
     const d = new Date(dateStr);
-    const start = new Date(d);
-    start.setDate(d.getDate() - d.getDay());
-    return start.toISOString().slice(0, 10);
+    const day = d.getDay(); // 0 = Sun, 1 = Mon
+    const diff = day === 0 ? -6 : 1 - day;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diff);
+    return monday.toISOString().slice(0, 10);
   };
 
-  /* ------------------ metrics ------------------ */
-  const totalMiles = runs.reduce((sum, r) => sum + r.Distance, 0);
+  const generateWeeks = (start, end) => {
+    const weeks = [];
+    const current = new Date(start);
 
-  const avgPaceSeconds =
-    runs.reduce((sum, r) => sum + paceToSeconds(r.AveragePace), 0) /
-    runs.length;
+    while (current <= end) {
+      weeks.push(current.toISOString().slice(0, 10));
+      current.setDate(current.getDate() + 7);
+    }
+    return weeks;
+  };
 
-  const avgHR =
-    runs.reduce((sum, r) => sum + r.AvgHeartRate, 0) / runs.length;
-
-  const weeklyMileage = {};
-  runs.forEach((run) => {
-    const week = getWeekKey(run.Date);
-    weeklyMileage[week] = (weeklyMileage[week] || 0) + run.Distance;
+  /* ------------------ Filter Runs ------------------ */
+  const trainingRuns = runs.filter((r) => {
+    const d = new Date(r.Date);
+    return d >= TRAINING_START && d <= RACE_DATE;
   });
 
-  const latestWeekMiles =
-    Object.values(weeklyMileage).slice(-1)[0] || 0;
+  /* ------------------ Weekly Mileage ------------------ */
+  const trainingWeeks = generateWeeks(TRAINING_START, RACE_DATE);
 
-  const WEEKLY_GOAL_MIN = 45;
-  const WEEKLY_GOAL_MAX = 55;
+  const weeklyMileage = {};
+  trainingWeeks.forEach((week) => {
+    weeklyMileage[week] = 0;
+  });
+
+  trainingRuns.forEach((run) => {
+    const week = getWeekKey(run.Date);
+    if (weeklyMileage[week] !== undefined) {
+      weeklyMileage[week] += run.Distance;
+    }
+  });
+
+  const latestWeek = trainingWeeks[trainingWeeks.length - 1];
+  const latestWeekMiles = weeklyMileage[latestWeek] || 0;
+
+  /* ------------------ Metrics ------------------ */
+  const totalMiles = trainingRuns.reduce(
+    (sum, r) => sum + r.Distance,
+    0
+  );
+
+  const avgPaceSeconds =
+    trainingRuns.reduce(
+      (sum, r) => sum + paceToSeconds(r.AveragePace),
+      0
+    ) / (trainingRuns.length || 1);
+
+  const avgHR =
+    trainingRuns.reduce((sum, r) => sum + r.AvgHeartRate, 0) /
+    (trainingRuns.length || 1);
 
   /* ------------------ UI ------------------ */
   return (
     <main className="max-w-6xl mx-auto px-4 py-10 space-y-10">
-      {/* Header */}
-      <div>
-        <h1 className="text-4xl font-extrabold tracking-tight">
+      <div className="flex items-start justify-between mb-10">
+        <div>
+          <h1 className="text-4xl font-extrabold mb-2 tracking-tight">
           🏃 Ultra 50km Training
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Progressive overload · Weekly volume · Long-term durability
-        </p>
-      </div>
+          </h1>
+          <p className="text-gray-600">
+            Monday → Sunday weeks · Jan 5 → Race Day
+          </p>
+        </div>
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-medium
+                    text-gray-700 border border-gray-300 rounded-lg
+                    px-4 py-2 hover:bg-gray-100 hover:text-gray-900
+                    transition-colors"
+        >
+          ← Back
+        </a>
+        </div>
+
 
       {/* Overview */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Stat title="Total Miles" value={totalMiles.toFixed(1)} />
         <Stat title="Avg Pace" value={secondsToPace(avgPaceSeconds)} />
         <Stat title="Avg HR" value={Math.round(avgHR)} />
-        <Stat title="Runs" value={runs.length} />
+        <Stat title="Runs" value={trainingRuns.length} />
       </section>
 
-      {/* Weekly Volume */}
+      {/* Weekly Volume Progress */}
       <section className="bg-white border rounded-xl p-6 space-y-4">
-        <h2 className="text-xl font-semibold">Weekly Volume</h2>
+        <h2 className="text-xl font-semibold">Latest Week Volume</h2>
 
         <div className="flex justify-between text-sm text-gray-600">
           <span>{latestWeekMiles.toFixed(1)} miles</span>
@@ -87,12 +136,41 @@ export default function UltraPage() {
         </div>
       </section>
 
+      {/* Weekly Breakdown */}
+      <section className="bg-white border rounded-xl p-6 space-y-4">
+        <h2 className="text-xl font-semibold">Weekly Breakdown</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          {trainingWeeks.map((week) => {
+            const miles = weeklyMileage[week];
+            const inGoal =
+              miles >= WEEKLY_GOAL_MIN && miles <= WEEKLY_GOAL_MAX;
+
+            return (
+              <div
+                key={week}
+                className={`flex justify-between p-3 rounded-lg border ${
+                  inGoal
+                    ? "bg-emerald-50 border-emerald-200"
+                    : "bg-gray-50"
+                }`}
+              >
+                <span>Week of {week}</span>
+                <span className="font-semibold">
+                  {miles.toFixed(1)} mi
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Run Log */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Runs</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {runs.map((run, i) => (
+          {trainingRuns.map((run, i) => (
             <RunCard key={i} run={run} />
           ))}
         </div>
