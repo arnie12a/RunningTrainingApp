@@ -119,6 +119,7 @@ export default function UltraPage() {
           </h1>
           <p className="text-slate-600">
             Tracking my progress toward race day — miles, time, and consistency.
+            I have a lot of physical goals for myself this year. I am going to use this training for 
           </p>
         </div>
       </div>
