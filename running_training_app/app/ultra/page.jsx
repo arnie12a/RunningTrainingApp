@@ -118,8 +118,12 @@ export default function UltraPage() {
             🏃 Ultra 50km Training
           </h1>
           <p className="text-slate-600">
-            Tracking my progress toward race day — miles, time, and consistency.
-            I have a lot of physical goals for myself this year. I am going to use this training for 
+            Dear Future Arnie, 
+            2026 is going to be a big one. You will climb your first 14er, hike the Enchampments, and run your first ultramarathon. 
+            Through all the hardwork and consistency ahead, I am really excited to see what the furure version of myself holds in June. 
+          </p>
+          <p className="text-slate-600">
+            Welcome to my Ultra-marathon 50km dashbaord where I will be tracking all my runs before my big race day in June!
           </p>
         </div>
       </div>
