@@ -7,10 +7,10 @@ export default function Home() {
 
       <div className="flex gap-4">
         <Link
-          href="/ultra"
+          href="/activity"
           className="px-4 py-2 rounded-lg bg-black text-white"
         >
-          50K Ultra
+          Running/Hiking for Vibes
         </Link>
 
         <Link
